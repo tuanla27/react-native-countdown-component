@@ -31,6 +31,7 @@ class CountDown extends React.Component {
     timeLabelStyle: PropTypes.object,
     separatorStyle: PropTypes.object,
     timeToShow: PropTypes.array,
+    message: PropTypes.string,
     showSeparator: PropTypes.bool,
     size: PropTypes.number,
     until: PropTypes.number,
@@ -48,15 +49,16 @@ class CountDown extends React.Component {
   constructor(props) {
     super(props);
     this.timer = setInterval(this.updateTimer, 1000);
+    this.appState;
   }
 
   componentDidMount() {
-    AppState.addEventListener('change', this._handleAppStateChange);
+    this.appState = AppState.addEventListener('change', this._handleAppStateChange);
   }
 
   componentWillUnmount() {
+    this.appState.remove();
     clearInterval(this.timer);
-    AppState.removeEventListener('change', this._handleAppStateChange);
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -135,7 +137,7 @@ class CountDown extends React.Component {
     return (
       <View style={[
         styles.digitCont,        
-        {width: size * 2.3, height: size * 2.6},
+        // {width: size * 2.3, height: size * 2.6},
         digitStyle,
       ]}>
         <Text style={[
@@ -178,20 +180,18 @@ class CountDown extends React.Component {
   renderSeparator = () => {
     const {separatorStyle, size} = this.props;
     return (
-      <View style={{justifyContent: 'center', alignItems: 'center'}}>
-        <Text style={[
-          styles.separatorTxt,
-          {fontSize: size * 1.2},
-          separatorStyle,
-        ]}>
-          {':'}
-        </Text>
-      </View>
+      <Text style={[
+        styles.separatorTxt,
+        {fontSize: size},
+        separatorStyle,
+      ]}>
+        {':'}
+      </Text>
     );
   };
 
   renderCountDown = () => {
-    const {timeToShow, timeLabels, showSeparator} = this.props;
+    const {timeToShow, timeLabels, showSeparator, message, messageStyle, size} = this.props;
     const {until} = this.state;
     const {days, hours, minutes, seconds} = this.getTimeLeft();
     const newTime = sprintf('%02d:%02d:%02d:%02d', days, hours, minutes, seconds).split(':');
@@ -202,6 +202,7 @@ class CountDown extends React.Component {
         style={styles.timeCont}
         onPress={this.props.onPress}
       >
+        {message ? <Text style={[messageStyle, styles.messageBaseStyle, {fontSize: size}]} >{message} </Text> : null}
         {timeToShow.includes('D') ? this.renderDoubleDigits(timeLabels.d, newTime[0]) : null}
         {showSeparator && timeToShow.includes('D') && timeToShow.includes('H') ? this.renderSeparator() : null}
         {timeToShow.includes('H') ? this.renderDoubleDigits(timeLabels.h, newTime[1]) : null}
@@ -229,6 +230,7 @@ CountDown.defaultProps = {
   timeLabels: DEFAULT_TIME_LABELS,
   separatorStyle: DEFAULT_SEPARATOR_STYLE,
   timeToShow: DEFAULT_TIME_TO_SHOW,
+  message: '',
   showSeparator: false,
   until: 0,
   size: 15,
@@ -252,7 +254,6 @@ const styles = StyleSheet.create({
   },
   digitCont: {
     borderRadius: 5,
-    marginHorizontal: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -262,13 +263,16 @@ const styles = StyleSheet.create({
   },
   digitTxt: {
     color: 'white',
-    fontWeight: 'bold',
+    fontWeight: '500',
     fontVariant: ['tabular-nums']
   },
   separatorTxt: {
     backgroundColor: 'transparent',
-    fontWeight: 'bold',
+    fontWeight: '500',
   },
+  messageBaseStyle: {
+    textAlign: 'center',
+  }
 });
 
 export default CountDown;
